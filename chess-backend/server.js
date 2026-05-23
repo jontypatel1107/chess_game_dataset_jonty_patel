@@ -14,6 +14,7 @@ const gameRoutes = require("./routes/gameRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
 const leaderboardRoutes = require("./routes/leaderboardRoutes");
 const matchRoutes = require("./routes/matchRoutes");
+const playerRoutes = require("./routes/playerRoutes");
 
 // Connect to MongoDB Atlas
 connectDB();
@@ -68,6 +69,7 @@ app.use("/api/v1/games", gameRoutes);
 app.use("/api/v1/tournaments", tournamentRoutes);
 app.use("/api/v1/leaderboard", leaderboardRoutes);
 app.use("/api/v1/matches", matchRoutes);
+app.use("/api/v1/players", playerRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────
 app.use("*", (req, res) => {
