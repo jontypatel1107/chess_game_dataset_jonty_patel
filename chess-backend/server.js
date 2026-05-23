@@ -19,6 +19,10 @@ const openingRoutes = require("./routes/openingRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const statsRoutes = require("./routes/statsRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const systemRoutes = require("./routes/systemRoutes");
+const middlewareRoutes = require("./routes/middlewareRoutes");
+const protectedRoutes = require("./routes/protectedRoutes");
 
 // Connect to MongoDB Atlas
 connectDB();
@@ -78,6 +82,10 @@ app.use("/api/v1/openings", openingRoutes);
 app.use("/api/v1/search", searchRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/stats", statsRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/system", systemRoutes);
+app.use("/api/v1/middleware", middlewareRoutes);
+app.use("/api/v1/protected", protectedRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────
 app.use("*", (req, res) => {
