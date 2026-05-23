@@ -17,6 +17,8 @@ const matchRoutes = require("./routes/matchRoutes");
 const playerRoutes = require("./routes/playerRoutes");
 const openingRoutes = require("./routes/openingRoutes");
 const searchRoutes = require("./routes/searchRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
+const statsRoutes = require("./routes/statsRoutes");
 
 // Connect to MongoDB Atlas
 connectDB();
@@ -74,6 +76,8 @@ app.use("/api/v1/matches", matchRoutes);
 app.use("/api/v1/players", playerRoutes);
 app.use("/api/v1/openings", openingRoutes);
 app.use("/api/v1/search", searchRoutes);
+app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/v1/stats", statsRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────
 app.use("*", (req, res) => {
