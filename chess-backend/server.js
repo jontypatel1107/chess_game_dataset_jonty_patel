@@ -70,6 +70,20 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.get("/api/v1/health", (req, res) => {
+  successResponse(res, 200, "Chess API Server is running", {
+    status: "healthy",
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+    version: "1.0.0",
+  });
+});
+
+app.options("/api/v1/*", (req, res) => {
+  res.set("Allow", "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS");
+  return res.sendStatus(204);
+});
+
 // ─── API Routes (v1) ─────────────────────────────────────────
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
