@@ -39,13 +39,45 @@ router.get("/turn-count-average", asyncHandler(async (req, res) => {
   return successResponse(res, 200, "Average turn count fetched successfully", { averageTurns: Number((stats?.averageTurns || 0).toFixed(2)) });
 }));
 router.get("/rated-vs-casual", asyncHandler(async (req, res) => successResponse(res, 200, "Rated vs casual fetched successfully", {
-  rated: await Game.countDocuments({ "ratingChange.white": { $ne: 0 } }),
-  casual: await Game.countDocuments({ "ratingChange.white": 0, "ratingChange.black": 0 }),
+  rated: await Game.countDocuments({ rated: true }),
+  casual: await Game.countDocuments({ rated: false }),
 })));
 router.get("/time-control-usage", asyncHandler(async (req, res) => successResponse(res, 200, "Time control usage fetched successfully", await groupCount("timeControl"))));
 router.get("/shortest-games", asyncHandler(async (req, res) => successResponse(res, 200, "Shortest games fetched successfully", await Game.find({}).sort({ totalMoves: 1 }).limit(10).populate("whitePlayer blackPlayer", "username rating"))));
 router.get("/longest-games", asyncHandler(async (req, res) => successResponse(res, 200, "Longest games fetched successfully", await Game.find({}).sort({ totalMoves: -1 }).limit(10).populate("whitePlayer blackPlayer", "username rating"))));
-router.get("/rating-gap-upsets", asyncHandler(async (req, res) => successResponse(res, 200, "Rating gap upsets fetched successfully", [])));
+router.get("/rating-gap-upsets", asyncHandler(async (req, res) => {
+  const data = await Game.aggregate([
+    {
+      $addFields: {
+        ratingGap: { $abs: { $subtract: ["$playerRatings.white", "$playerRatings.black"] } },
+        lowerRatedWon: {
+          $or: [
+            { $and: [{ $eq: ["$result", "white_wins"] }, { $lt: ["$playerRatings.white", "$playerRatings.black"] }] },
+            { $and: [{ $eq: ["$result", "black_wins"] }, { $lt: ["$playerRatings.black", "$playerRatings.white"] }] },
+          ],
+        },
+      },
+    },
+    { $match: { lowerRatedWon: true } },
+    { $lookup: { from: "users", localField: "whitePlayer", foreignField: "_id", as: "white" } },
+    { $lookup: { from: "users", localField: "blackPlayer", foreignField: "_id", as: "black" } },
+    { $unwind: "$white" },
+    { $unwind: "$black" },
+    { $sort: { ratingGap: -1 } },
+    { $limit: 20 },
+    {
+      $project: {
+        whitePlayer: { username: "$white.username", rating: "$playerRatings.white" },
+        blackPlayer: { username: "$black.username", rating: "$playerRatings.black" },
+        winner: "$result",
+        ratingGap: 1,
+        opening: 1,
+        totalMoves: 1,
+      },
+    },
+  ]);
+  return successResponse(res, 200, "Rating gap upsets fetched successfully", data);
+}));
 router.get("/checkmate-frequency", asyncHandler(async (req, res) => {
   const total = await Game.countDocuments({});
   const checkmates = await Game.countDocuments({ endReason: "checkmate" });
@@ -66,7 +98,35 @@ router.get("/timeouts", asyncHandler(async (req, res) => {
   const timeouts = await Game.countDocuments({ endReason: "timeout" });
   return successResponse(res, 200, "Timeout analytics fetched successfully", { count: timeouts, rate: rate(timeouts, total) });
 }));
-router.get("/opening-success", asyncHandler(async (req, res) => successResponse(res, 200, "Opening success fetched successfully", [])));
+router.get("/opening-success", asyncHandler(async (req, res) => {
+  const data = await Game.aggregate([
+    { $match: { "opening.name": { $ne: "" } } },
+    {
+      $group: {
+        _id: { eco: "$opening.eco", name: "$opening.name" },
+        games: { $sum: 1 },
+        whiteWins: { $sum: { $cond: [{ $eq: ["$result", "white_wins"] }, 1, 0] } },
+        blackWins: { $sum: { $cond: [{ $eq: ["$result", "black_wins"] }, 1, 0] } },
+        draws: { $sum: { $cond: [{ $eq: ["$result", "draw"] }, 1, 0] } },
+      },
+    },
+    { $match: { games: { $gte: 5 } } },
+    {
+      $project: {
+        eco: "$_id.eco",
+        name: "$_id.name",
+        games: 1,
+        whiteWinRate: { $round: [{ $multiply: [{ $divide: ["$whiteWins", "$games"] }, 100] }, 2] },
+        blackWinRate: { $round: [{ $multiply: [{ $divide: ["$blackWins", "$games"] }, 100] }, 2] },
+        drawRate: { $round: [{ $multiply: [{ $divide: ["$draws", "$games"] }, 100] }, 2] },
+        _id: 0,
+      },
+    },
+    { $sort: { games: -1 } },
+    { $limit: 50 },
+  ]);
+  return successResponse(res, 200, "Opening success fetched successfully", data);
+}));
 router.get("/player-growth", asyncHandler(async (req, res) => {
   const players = await User.find({ isActive: true }).select("username rating gamesPlayed createdAt").sort({ createdAt: -1 }).limit(20);
   return successResponse(res, 200, "Player growth fetched successfully", players);
