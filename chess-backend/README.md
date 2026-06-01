@@ -262,3 +262,39 @@ Import the collection by creating a new request environment with:
 - `token`: (paste JWT after login)
 
 Then use `{{base_url}}/auth/login` with Bearer `{{token}}` for protected routes.
+
+---
+
+## Dataset Import
+
+This backend includes an importer for the local chess JSON dataset.
+
+Place the dataset file in the backend root folder with this exact name:
+
+```text
+Chess Game Dataset.json
+```
+
+Then run:
+
+```bash
+npm run import:data
+```
+
+The importer:
+- Reads `Chess Game Dataset.json`
+- Creates or updates players from `white_id` and `black_id`
+- Stores games in MongoDB Atlas using the existing `Game` model
+- Saves dataset metadata such as `sourceId`, `moveText`, opening data, rated status, and increment code
+- Upserts games by `{ source, sourceId }` so repeated imports do not create duplicates
+
+Import result from the provided dataset:
+
+| Item | Count |
+|------|-------|
+| Dataset rows | 20,058 |
+| Unique games imported | 19,113 |
+| Duplicate dataset IDs | 945 |
+| Players imported | 15,635 |
+
+`Chess Game Dataset.json` is ignored by Git because it is a large local dataset file.
