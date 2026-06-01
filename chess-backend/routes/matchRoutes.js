@@ -34,8 +34,8 @@ router.get("/scroll", asyncHandler(async (req, res) => {
 }));
 router.get("/infinite", asyncHandler((req, res) => sendMatches(req, res, "Infinite-scroll matches fetched successfully", {}, { createdAt: -1 })));
 
-router.get("/filter/rated", asyncHandler((req, res) => sendMatches(req, res, "Rated matches fetched successfully", { "ratingChange.white": { $ne: 0 } })));
-router.get("/filter/unrated", asyncHandler((req, res) => sendMatches(req, res, "Unrated matches fetched successfully", { "ratingChange.white": 0, "ratingChange.black": 0 })));
+router.get("/filter/rated", asyncHandler((req, res) => sendMatches(req, res, "Rated matches fetched successfully", { rated: true })));
+router.get("/filter/unrated", asyncHandler((req, res) => sendMatches(req, res, "Unrated matches fetched successfully", { rated: false })));
 router.get("/filter/white-wins", asyncHandler((req, res) => sendMatches(req, res, "White wins fetched successfully", { result: "white_wins" })));
 router.get("/filter/black-wins", asyncHandler((req, res) => sendMatches(req, res, "Black wins fetched successfully", { result: "black_wins" })));
 router.get("/filter/draws", asyncHandler((req, res) => sendMatches(req, res, "Draw matches fetched successfully", { result: "draw" })));
@@ -46,13 +46,18 @@ router.get("/filter/rapid", asyncHandler((req, res) => sendMatches(req, res, "Ra
 router.get("/filter/blitz", asyncHandler((req, res) => sendMatches(req, res, "Blitz matches fetched successfully", { timeControl: "blitz" })));
 router.get("/filter/bullet", asyncHandler((req, res) => sendMatches(req, res, "Bullet matches fetched successfully", { timeControl: "bullet" })));
 router.get("/filter/classical", asyncHandler((req, res) => sendMatches(req, res, "Classical matches fetched successfully", { timeControl: "classical" })));
-router.get("/filter/high-rated", asyncHandler((req, res) => sendMatches(req, res, "High rated matches fetched successfully")));
-router.get("/filter/low-rated", asyncHandler((req, res) => sendMatches(req, res, "Low rated matches fetched successfully")));
+router.get("/filter/high-rated", asyncHandler((req, res) => sendMatches(req, res, "High rated matches fetched successfully", {
+  $or: [{ "playerRatings.white": { $gte: 1800 } }, { "playerRatings.black": { $gte: 1800 } }],
+})));
+router.get("/filter/low-rated", asyncHandler((req, res) => sendMatches(req, res, "Low rated matches fetched successfully", {
+  "playerRatings.white": { $lt: 1200 },
+  "playerRatings.black": { $lt: 1200 },
+})));
 router.get("/filter/long-games", asyncHandler((req, res) => sendMatches(req, res, "Long games fetched successfully", { totalMoves: { $gte: 60 } })));
 
 router.get("/sort/shortest", asyncHandler((req, res) => sendMatches(req, res, "Shortest matches fetched successfully", {}, { totalMoves: 1 })));
 router.get("/sort/longest", asyncHandler((req, res) => sendMatches(req, res, "Longest matches fetched successfully", {}, { totalMoves: -1 })));
-router.get("/sort/highest-rated", asyncHandler((req, res) => sendMatches(req, res, "Highest rated matches fetched successfully", {}, { createdAt: -1 })));
+router.get("/sort/highest-rated", asyncHandler((req, res) => sendMatches(req, res, "Highest rated matches fetched successfully", {}, { "playerRatings.white": -1, "playerRatings.black": -1 })));
 
 router.post("/bulk-upload", asyncHandler(async (req, res) => {
   const matches = Array.isArray(req.body) ? req.body : req.body.matches || [];
@@ -89,7 +94,13 @@ router.post("/", asyncHandler(async (req, res) => {
 
 router.get("/:matchId/moves", asyncHandler(async (req, res) => {
   const match = await Game.findById(req.params.matchId).populate("moves.player", "username rating");
-  return successResponse(res, 200, "Match moves fetched successfully", match ? match.moves : []);
+  const moves = match?.moves?.length
+    ? match.moves
+    : String(match?.moveText || "").split(/\s+/).filter(Boolean).map((notation, index) => ({
+      moveNumber: index + 1,
+      notation,
+    }));
+  return successResponse(res, 200, "Match moves fetched successfully", moves);
 }));
 router.get("/:matchId/pgn", asyncHandler(async (req, res) => {
   const match = await Game.findById(req.params.matchId);
@@ -104,8 +115,10 @@ router.get("/:matchId/analysis", asyncHandler(async (req, res) => {
   return successResponse(res, 200, "Analysis fetched successfully", {
     matchId: req.params.matchId,
     totalMoves: match ? match.totalMoves : 0,
-    checks: match ? match.moves.filter((move) => move.isCheck).length : 0,
-    captures: match ? match.moves.filter((move) => move.isCapture).length : 0,
+    opening: match ? match.opening : null,
+    rated: match ? match.rated : false,
+    checks: match ? (match.moves.length ? match.moves.filter((move) => move.isCheck).length : (match.moveText.match(/\+/g) || []).length) : 0,
+    captures: match ? (match.moves.length ? match.moves.filter((move) => move.isCapture).length : (match.moveText.match(/x/g) || []).length) : 0,
     engine: "not_configured",
   });
 }));
