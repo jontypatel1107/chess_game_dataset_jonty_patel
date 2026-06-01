@@ -12,11 +12,11 @@ const gamePopulate = [
 const parseSort = (sort = "-createdAt") => {
   const aliases = {
     turns: "totalMoves",
-    white_rating: "createdAt",
-    black_rating: "createdAt",
+    white_rating: "whitePlayer.rating",
+    black_rating: "blackPlayer.rating",
     winner: "result",
     time_control: "timeControl",
-    opening_name: "createdAt",
+    opening_name: "opening.name",
     popularity: "createdAt",
     accuracy: "createdAt",
     duration: "endedAt",
@@ -69,12 +69,14 @@ const rate = (part, total) => (total ? Number(((part / total) * 100).toFixed(2))
 
 const makePgn = (game) => {
   const moves = game.moves || [];
-  const body = moves
+  const body = moves.length
+    ? moves
     .map((move, index) => {
       const notation = move.notation || `${move.from || ""}${move.to || ""}` || "...";
       return index % 2 === 0 ? `${Math.floor(index / 2) + 1}. ${notation}` : notation;
     })
-    .join(" ");
+      .join(" ")
+    : game.moveText || "";
   const result = game.result === "white_wins" ? "1-0" : game.result === "black_wins" ? "0-1" : game.result === "draw" ? "1/2-1/2" : "*";
   return `${body} ${result}`.trim();
 };
