@@ -17,7 +17,7 @@ router.get("/matches", asyncHandler(async (req, res) => {
   const { skip, limit, page } = getPagination(req.query.page, req.query.limit);
   const regex = new RegExp(escapeRegExp(req.query.q || ""), "i");
   const all = await Game.find({}).populate("whitePlayer blackPlayer winner", "username rating").sort({ createdAt: -1 });
-  const filtered = all.filter((game) => regex.test(makePgn(game)) || regex.test(game.result || "") || regex.test(game.endReason || ""));
+  const filtered = all.filter((game) => regex.test(makePgn(game)) || regex.test(game.moveText || "") || regex.test(game.opening?.name || "") || regex.test(game.opening?.eco || "") || regex.test(game.result || "") || regex.test(game.endReason || ""));
   return paginatedResponse(res, "Match search fetched successfully", filtered.slice(skip, skip + limit), buildPaginationMeta(filtered.length, page, limit));
 }));
 router.get("/players", asyncHandler(async (req, res) => {
@@ -28,19 +28,31 @@ router.get("/players", asyncHandler(async (req, res) => {
 }));
 router.get("/openings", asyncHandler(async (req, res) => {
   remember("openings", req.query.q);
-  const q = String(req.query.q || "").toLowerCase();
-  return successResponse(res, 200, "Opening search fetched successfully", openings.filter((opening) => JSON.stringify(opening).toLowerCase().includes(q)));
+  const regex = new RegExp(escapeRegExp(req.query.q || ""), "i");
+  const datasetOpenings = await Game.aggregate([
+    { $match: { $or: [{ "opening.name": regex }, { "opening.eco": regex }] } },
+    { $group: { _id: { eco: "$opening.eco", name: "$opening.name" }, games: { $sum: 1 } } },
+    { $project: { eco: "$_id.eco", name: "$_id.name", games: 1, source: "dataset", _id: 0 } },
+    { $sort: { games: -1 } },
+    { $limit: 50 },
+  ]);
+  return successResponse(res, 200, "Opening search fetched successfully", datasetOpenings);
 }));
 router.get("/eco", asyncHandler(async (req, res) => {
   remember("eco", req.query.q);
-  const q = String(req.query.q || "").toLowerCase();
-  return successResponse(res, 200, "ECO search fetched successfully", openings.filter((opening) => opening.eco.toLowerCase().includes(q)));
+  const regex = new RegExp(escapeRegExp(req.query.q || ""), "i");
+  const datasetOpenings = await Game.aggregate([
+    { $match: { "opening.eco": regex } },
+    { $group: { _id: { eco: "$opening.eco", name: "$opening.name" }, games: { $sum: 1 } } },
+    { $project: { eco: "$_id.eco", name: "$_id.name", games: 1, source: "dataset", _id: 0 } },
+    { $sort: { games: -1 } },
+  ]);
+  return successResponse(res, 200, "ECO search fetched successfully", datasetOpenings);
 }));
 router.get("/moves", asyncHandler(async (req, res) => {
   remember("moves", req.query.q);
-  const sequence = String(req.query.q || "").split(",").map((move) => move.trim().toLowerCase()).filter(Boolean);
-  const games = await Game.find({}).populate("whitePlayer blackPlayer", "username rating");
-  const matches = games.filter((game) => sequence.every((move, index) => String(game.moves[index]?.notation || "").toLowerCase() === move));
+  const sequence = String(req.query.q || "").split(/[,\s]+/).map((move) => move.trim()).filter(Boolean).join(" ");
+  const matches = await Game.find({ moveText: new RegExp(escapeRegExp(sequence), "i") }).populate("whitePlayer blackPlayer", "username rating").limit(50);
   return successResponse(res, 200, "Move sequence search fetched successfully", matches);
 }));
 router.get("/fuzzy", asyncHandler(async (req, res) => {
@@ -62,6 +74,9 @@ router.get("/advanced", asyncHandler(async (req, res) => {
   if (req.query.result) filters.result = req.query.result;
   if (req.query.timeControl) filters.timeControl = req.query.timeControl;
   if (req.query.endReason) filters.endReason = req.query.endReason;
+  if (req.query.rated !== undefined) filters.rated = req.query.rated === "true";
+  if (req.query.opening) filters["opening.name"] = new RegExp(escapeRegExp(req.query.opening), "i");
+  if (req.query.eco) filters["opening.eco"] = new RegExp(escapeRegExp(req.query.eco), "i");
   const matches = await Game.find(filters).populate("whitePlayer blackPlayer winner", "username rating");
   return successResponse(res, 200, "Advanced search fetched successfully", matches);
 }));
