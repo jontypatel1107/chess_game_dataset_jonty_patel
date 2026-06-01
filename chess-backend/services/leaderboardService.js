@@ -1,5 +1,6 @@
 const Leaderboard = require("../models/Leaderboard");
 const User = require("../models/User");
+const Game = require("../models/Game");
 const { getPagination, buildPaginationMeta } = require("../utils/pagination");
 
 const getLeaderboard = async ({ page, limit, category = "overall", country }) => {
@@ -40,36 +41,43 @@ const getLeaderboard = async ({ page, limit, category = "overall", country }) =>
 };
 
 const getTopPlayersByTimeControl = async () => {
-  // Aggregation: top player per time control category
-  return Leaderboard.aggregate([
-    { $match: { category: { $ne: "overall" } } },
-    { $sort: { category: 1, rating: -1 } },
+  return Game.aggregate([
+    { $project: { timeControl: 1, player: ["$whitePlayer", "$blackPlayer"] } },
+    { $unwind: "$player" },
     {
       $group: {
-        _id: "$category",
-        topPlayer: { $first: "$player" },
-        topRating: { $first: "$rating" },
-        totalPlayers: { $sum: 1 },
-        avgRating: { $avg: "$rating" },
+        _id: { category: "$timeControl", player: "$player" },
+        gamesPlayed: { $sum: 1 },
       },
     },
     {
       $lookup: {
         from: "users",
-        localField: "topPlayer",
+        localField: "_id.player",
         foreignField: "_id",
         as: "playerInfo",
       },
     },
     { $unwind: "$playerInfo" },
+    { $sort: { "_id.category": 1, gamesPlayed: -1, "playerInfo.rating": -1 } },
+    {
+      $group: {
+        _id: "$_id.category",
+        topPlayer: { $first: "$playerInfo" },
+        gamesPlayed: { $first: "$gamesPlayed" },
+        totalPlayers: { $sum: 1 },
+        avgRating: { $avg: "$playerInfo.rating" },
+      },
+    },
     {
       $project: {
         category: "$_id",
-        topRating: 1,
+        topRating: "$topPlayer.rating",
         totalPlayers: 1,
         avgRating: { $round: ["$avgRating", 0] },
-        topPlayerName: "$playerInfo.username",
-        topPlayerAvatar: "$playerInfo.avatar",
+        topPlayerName: "$topPlayer.username",
+        topPlayerAvatar: "$topPlayer.avatar",
+        gamesPlayed: 1,
         _id: 0,
       },
     },
