@@ -65,6 +65,7 @@ const gameSchema = new mongoose.Schema(
       default: null,
     },
     moves: [moveSchema], // Embedded moves array
+    moveText: { type: String, default: "" },
     totalMoves: { type: Number, default: 0 },
     timeControl: {
       type: String,
@@ -89,6 +90,15 @@ const gameSchema = new mongoose.Schema(
       white: { type: Number, default: 0 },
       black: { type: Number, default: 0 },
     },
+    source: { type: String, default: "app", index: true },
+    sourceId: { type: String, default: null, index: true },
+    rated: { type: Boolean, default: false },
+    incrementCode: { type: String, default: "" },
+    opening: {
+      eco: { type: String, default: "" },
+      name: { type: String, default: "" },
+      ply: { type: Number, default: 0 },
+    },
     isArchived: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
@@ -98,5 +108,6 @@ const gameSchema = new mongoose.Schema(
 gameSchema.index({ whitePlayer: 1, status: 1 });
 gameSchema.index({ blackPlayer: 1, status: 1 });
 gameSchema.index({ createdAt: -1 });
+gameSchema.index({ source: 1, sourceId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("Game", gameSchema);
