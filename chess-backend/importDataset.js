@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 
 const connectDB = require("./config/db");
 const Game = require("./models/Game");
+const Leaderboard = require("./models/Leaderboard");
 const User = require("./models/User");
 
 const DATASET_FILE = path.join(__dirname, "Chess Game Dataset.json");
@@ -67,9 +68,8 @@ const toTimeLimit = (incrementCode) => {
 
 const flush = async (operations, label) => {
   if (operations.length === 0) return;
-  const result = label === "users"
-    ? await User.bulkWrite(operations, { ordered: false })
-    : await Game.bulkWrite(operations, { ordered: false });
+  const model = label === "users" ? User : label === "leaderboard" ? Leaderboard : Game;
+  const result = await model.bulkWrite(operations, { ordered: false });
 
   console.log(`Imported ${label} batch:`, {
     inserted: result.insertedCount || result.upsertedCount || 0,
@@ -154,6 +154,34 @@ const importDataset = async () => {
   }).select("_id username");
   const userByUsername = new Map(users.map((user) => [user.username, user._id]));
 
+  const leaderboardOperations = [];
+  for (const [username, stats] of playerStats.entries()) {
+    const player = userByUsername.get(username);
+    if (!player) continue;
+
+    leaderboardOperations.push({
+      updateOne: {
+        filter: { player },
+        update: {
+          $set: {
+            rating: stats.rating,
+            gamesPlayed: stats.gamesPlayed,
+            wins: stats.wins,
+            losses: stats.losses,
+            draws: stats.draws,
+            bestRating: Math.max(stats.rating, 1200),
+            category: "overall",
+            lastUpdated: new Date(),
+          },
+        },
+        upsert: true,
+      },
+    });
+
+    if (leaderboardOperations.length >= BATCH_SIZE) await flush(leaderboardOperations, "leaderboard");
+  }
+  await flush(leaderboardOperations, "leaderboard");
+
   const gameOperations = [];
   for (const row of rows) {
     const whitePlayer = userByUsername.get(toUsername(row.white_id));
@@ -177,6 +205,10 @@ const importDataset = async () => {
             timeLimit: toTimeLimit(row.increment_code),
             startedAt: toDate(row.created_at),
             endedAt: toDate(row.last_move_at),
+            playerRatings: {
+              white: toNumber(row.white_rating, 0),
+              black: toNumber(row.black_rating, 0),
+            },
             source: SOURCE,
             sourceId: row.id,
             rated: String(row.rated).toUpperCase() === "TRUE",
