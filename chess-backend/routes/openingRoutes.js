@@ -4,6 +4,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const { successResponse, paginatedResponse } = require("../utils/response");
 const { getPagination, buildPaginationMeta } = require("../utils/pagination");
 const openings = require("../data/openings");
+const Game = require("../models/Game");
 
 const contains = (opening, q) => {
   const query = String(q || "").toLowerCase();
@@ -14,11 +15,56 @@ const contains = (opening, q) => {
 };
 
 const sendOpenings = (res, message, data) => successResponse(res, 200, message, data);
+const datasetPopularOpenings = (limit = 50, match = {}) => Game.aggregate([
+  { $match: { "opening.name": { $ne: "" }, ...match } },
+  { $group: { _id: { eco: "$opening.eco", name: "$opening.name" }, games: { $sum: 1 } } },
+  { $project: { eco: "$_id.eco", name: "$_id.name", games: 1, source: "dataset", _id: 0 } },
+  { $sort: { games: -1 } },
+  { $limit: limit },
+]);
+const datasetOpeningWinRates = (limit = 50, match = {}) => Game.aggregate([
+  { $match: { "opening.name": { $ne: "" }, ...match } },
+  {
+    $group: {
+      _id: { eco: "$opening.eco", name: "$opening.name" },
+      games: { $sum: 1 },
+      whiteWins: { $sum: { $cond: [{ $eq: ["$result", "white_wins"] }, 1, 0] } },
+      blackWins: { $sum: { $cond: [{ $eq: ["$result", "black_wins"] }, 1, 0] } },
+      draws: { $sum: { $cond: [{ $eq: ["$result", "draw"] }, 1, 0] } },
+    },
+  },
+  { $match: { games: { $gte: 5 } } },
+  {
+    $project: {
+      eco: "$_id.eco",
+      name: "$_id.name",
+      games: 1,
+      whiteWinRate: { $round: [{ $multiply: [{ $divide: ["$whiteWins", "$games"] }, 100] }, 2] },
+      blackWinRate: { $round: [{ $multiply: [{ $divide: ["$blackWins", "$games"] }, 100] }, 2] },
+      drawRate: { $round: [{ $multiply: [{ $divide: ["$draws", "$games"] }, 100] }, 2] },
+      source: "dataset",
+      _id: 0,
+    },
+  },
+  { $sort: { games: -1 } },
+  { $limit: limit },
+]);
 
-router.get("/popular", asyncHandler(async (req, res) => sendOpenings(res, "Popular openings fetched successfully", [...openings].sort((a, b) => b.popularity - a.popularity))));
-router.get("/trending", asyncHandler(async (req, res) => sendOpenings(res, "Trending openings fetched successfully", [...openings].sort((a, b) => b.popularity - a.popularity).slice(0, 5))));
-router.get("/search", asyncHandler(async (req, res) => sendOpenings(res, "Openings search fetched successfully", openings.filter((opening) => contains(opening, req.query.q)))));
-router.get("/win-rates", asyncHandler(async (req, res) => sendOpenings(res, "Opening win rates fetched successfully", openings.map(({ eco, name, whiteWinRate, blackWinRate, drawRate }) => ({ eco, name, whiteWinRate, blackWinRate, drawRate })))));
+router.get("/popular", asyncHandler(async (req, res) => sendOpenings(res, "Popular openings fetched successfully", await datasetPopularOpenings(50))));
+router.get("/dataset/popular", asyncHandler(async (req, res) => {
+  const data = await datasetPopularOpenings(50);
+  return sendOpenings(res, "Popular dataset openings fetched successfully", data);
+}));
+router.get("/dataset/win-rates", asyncHandler(async (req, res) => {
+  const data = await datasetOpeningWinRates(50);
+  return sendOpenings(res, "Dataset opening win rates fetched successfully", data);
+}));
+router.get("/trending", asyncHandler(async (req, res) => sendOpenings(res, "Trending openings fetched successfully", await datasetPopularOpenings(5))));
+router.get("/search", asyncHandler(async (req, res) => {
+  const regex = new RegExp(String(req.query.q || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  return sendOpenings(res, "Openings search fetched successfully", await datasetPopularOpenings(50, { $or: [{ "opening.name": regex }, { "opening.eco": regex }] }));
+}));
+router.get("/win-rates", asyncHandler(async (req, res) => sendOpenings(res, "Opening win rates fetched successfully", await datasetOpeningWinRates(50))));
 router.get("/aggressive", asyncHandler(async (req, res) => sendOpenings(res, "Aggressive openings fetched successfully", openings.filter((opening) => opening.style === "aggressive" || opening.tags.includes("aggressive")))));
 router.get("/defensive", asyncHandler(async (req, res) => sendOpenings(res, "Defensive openings fetched successfully", openings.filter((opening) => opening.style === "defensive" || opening.tags.includes("defensive")))));
 router.get("/gambits", asyncHandler(async (req, res) => sendOpenings(res, "Gambit openings fetched successfully", openings.filter((opening) => opening.tags.includes("gambit")))));
@@ -33,8 +79,8 @@ router.get("/complexity", asyncHandler(async (req, res) => {
   return sendOpenings(res, "Openings by complexity fetched successfully", data);
 }));
 router.get("/eco/:ecoCode", asyncHandler(async (req, res) => {
-  const opening = openings.find((item) => item.eco.toLowerCase() === req.params.ecoCode.toLowerCase());
-  return sendOpenings(res, "Opening by ECO fetched successfully", opening || null);
+  const openingsByEco = await datasetPopularOpenings(50, { "opening.eco": new RegExp(`^${req.params.ecoCode}$`, "i") });
+  return sendOpenings(res, "Opening by ECO fetched successfully", openingsByEco);
 }));
 router.get("/", asyncHandler(async (req, res) => {
   const { skip, limit, page } = getPagination(req.query.page, req.query.limit);
