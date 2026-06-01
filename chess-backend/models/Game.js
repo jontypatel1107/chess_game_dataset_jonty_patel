@@ -90,6 +90,10 @@ const gameSchema = new mongoose.Schema(
       white: { type: Number, default: 0 },
       black: { type: Number, default: 0 },
     },
+    playerRatings: {
+      white: { type: Number, default: 0 },
+      black: { type: Number, default: 0 },
+    },
     source: { type: String, default: "app", index: true },
     sourceId: { type: String, default: null, index: true },
     rated: { type: Boolean, default: false },
