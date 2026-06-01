@@ -15,6 +15,7 @@ The project is organized as a REST API with MVC-style folders, JWT authenticatio
 - Request logging, rate limiting, input validation, and centralized error handling
 - Standard JSON response format for success and error responses
 - Seed script with sample users, games, tournaments, and leaderboard data
+- Dataset import script for loading the chess JSON dataset into MongoDB Atlas
 
 ## Tech Stack
 
@@ -49,6 +50,7 @@ chess_game_dataset_jonty_patel/
     +-- services/
     +-- utils/
     +-- .env.example
+    +-- importDataset.js
     +-- package.json
     +-- seed.js
     `-- server.js
@@ -123,6 +125,24 @@ Sample login credentials after seeding:
 | Admin | magnus@chess.com | password123 |
 | Player | fisher@chess.com | password123 |
 | Player | karpov@chess.com | password123 |
+
+### 5. Import the Chess Dataset
+
+Place the dataset file in the backend folder with this exact name:
+
+```text
+chess-backend/Chess Game Dataset.json
+```
+
+Then run:
+
+```bash
+npm run import:data
+```
+
+The importer reads the JSON dataset, creates or updates players, and stores games in MongoDB Atlas. It uses the original dataset game `id` as `sourceId`, so running the command again updates existing imported games instead of creating duplicates.
+
+The dataset file is ignored by Git because it is a large local data file.
 
 ## API Base URL
 
@@ -212,9 +232,11 @@ Run these commands inside `chess-backend/`.
 | `npm run dev` | Start development server with nodemon |
 | `npm start` | Start server with Node.js |
 | `npm run seed` | Seed MongoDB with sample chess data |
+| `npm run import:data` | Import `Chess Game Dataset.json` into MongoDB Atlas |
 
 ## Notes
 
 - The backend README inside `chess-backend/` contains more detailed endpoint notes.
 - `node_modules/` should not be committed.
+- `Chess Game Dataset.json` is intentionally ignored by Git.
 - Make sure your MongoDB Atlas cluster allows connections from your IP address before starting the server.
