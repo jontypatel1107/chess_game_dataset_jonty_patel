@@ -3,20 +3,15 @@ const asyncHandler = require("../utils/asyncHandler");
 const { successResponse, paginatedResponse } = require("../utils/response");
 
 const createGame = asyncHandler(async (req, res) => {
-  const { blackPlayer, timeControl, timeLimit, tournamentId } = req.body;
   const game = await gameService.createGame({
-    whitePlayerId: req.user._id,
-    blackPlayerId: blackPlayer,
-    timeControl,
-    timeLimit,
-    tournamentId,
+    ...req.body,
+    whitePlayerId: req.body.whitePlayerId || req.user._id,
   });
   return successResponse(res, 201, "Game created successfully", game);
 });
 
 const getAllGames = asyncHandler(async (req, res) => {
-  const { page, limit, status, timeControl, playerId } = req.query;
-  const { games, pagination } = await gameService.getAllGames({ page, limit, status, timeControl, playerId });
+  const { games, pagination } = await gameService.getAllGames(req.query);
   return paginatedResponse(res, "Games fetched successfully", games, pagination);
 });
 
@@ -35,9 +30,17 @@ const endGame = asyncHandler(async (req, res) => {
   return successResponse(res, 200, "Game ended successfully", game);
 });
 
-const getGameStats = asyncHandler(async (req, res) => {
-  const stats = await gameService.getGameStats();
-  return successResponse(res, 200, "Game statistics fetched successfully", stats);
+const handleBulkOperation = asyncHandler(async (req, res) => {
+  const { type } = req.params; // upload, update, delete, archive
+  const result = await gameService.bulkOperation(type, req.body);
+  return successResponse(res, 200, `Bulk ${type} operation successful`, result);
 });
 
-module.exports = { createGame, getAllGames, getGameById, addMove, endGame, getGameStats };
+module.exports = { 
+  createGame, 
+  getAllGames, 
+  getGameById, 
+  addMove, 
+  endGame, 
+  handleBulkOperation 
+};
