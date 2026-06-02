@@ -46,6 +46,7 @@ const seedData = async () => {
   // Create games
   const games = await Game.create([
     {
+      sourceId: "seed-game-1",
       whitePlayer: users[0]._id,
       blackPlayer: users[1]._id,
       status: "completed",
@@ -63,6 +64,7 @@ const seedData = async () => {
       ],
     },
     {
+      sourceId: "seed-game-2",
       whitePlayer: users[2]._id,
       blackPlayer: users[3]._id,
       status: "completed",
@@ -74,6 +76,7 @@ const seedData = async () => {
       endedAt: new Date("2024-01-12"),
     },
     {
+      sourceId: "seed-game-3",
       whitePlayer: users[1]._id,
       blackPlayer: users[4]._id,
       status: "ongoing",
@@ -82,6 +85,7 @@ const seedData = async () => {
       startedAt: new Date(),
     },
     {
+      sourceId: "seed-game-4",
       whitePlayer: users[4]._id,
       blackPlayer: users[5]._id,
       status: "completed",
