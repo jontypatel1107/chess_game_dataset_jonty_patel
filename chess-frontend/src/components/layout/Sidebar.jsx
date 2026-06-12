@@ -9,6 +9,7 @@ import {
   UserCircle, 
   Settings,
   Trophy,
+  BookOpen,
   ChevronLeft
 } from 'lucide-react';
 
@@ -19,6 +20,7 @@ const Sidebar = () => {
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { name: 'Leaderboard', icon: Trophy, path: '/leaderboard' },
+    { name: 'Openings', icon: BookOpen, path: '/openings' },
     { name: 'User Management', icon: Users, path: '/users', adminOnly: true },
     { name: 'Data Listing', icon: Database, path: '/data' },
     { name: 'Analytics', icon: BarChart3, path: '/analytics' },

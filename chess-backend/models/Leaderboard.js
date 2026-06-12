@@ -6,7 +6,6 @@ const leaderboardSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
       index: true,
     },
     rating: { type: Number, required: true, default: 1200, index: true },
@@ -29,5 +28,6 @@ const leaderboardSchema = new mongoose.Schema(
 );
 
 leaderboardSchema.index({ rating: -1, category: 1 });
+leaderboardSchema.index({ player: 1, category: 1 }, { unique: true });
 
 module.exports = mongoose.model("Leaderboard", leaderboardSchema);

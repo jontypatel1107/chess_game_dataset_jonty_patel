@@ -19,8 +19,11 @@ const registerUser = async ({ username, email, password, country, avatar }) => {
 
   const user = await User.create({ username, email, password, country, avatar });
 
-  // Create leaderboard entry for the new player
-  await Leaderboard.create({ player: user._id, rating: user.rating });
+  // Create leaderboard entries for all categories
+  const categories = ["overall", "bullet", "blitz", "rapid", "classical"];
+  await Leaderboard.create(
+    categories.map((cat) => ({ player: user._id, rating: user.rating, category: cat }))
+  );
 
   const token = generateToken(user._id);
   return { user: sanitizeUser(user), token };
