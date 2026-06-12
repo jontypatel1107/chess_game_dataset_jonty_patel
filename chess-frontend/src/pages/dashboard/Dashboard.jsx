@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Users, Gamepad2, Trophy, TrendingUp, History, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Users, Gamepad2, Trophy, TrendingUp } from 'lucide-react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  AreaChart, Area, PieChart, Pie, Cell 
+  AreaChart, Area, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, CartesianGrid, XAxis, YAxis
 } from 'recharts';
 
 import Card from '../../components/common/Card';
@@ -12,15 +12,17 @@ import Loader from '../../components/common/Loader';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
+  const [topPlayers, setTopPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [usersRes, gamesRes, analyticsRes] = await Promise.all([
+        const [usersRes, gamesRes, analyticsRes, lbRes] = await Promise.all([
           api.get('/stats/total-players'),
           api.get('/stats/total-matches'),
-          api.get('/analytics/victory-distribution')
+          api.get('/analytics/victory-distribution'),
+          api.get('/leaderboard', { params: { page: 1, limit: 3, category: 'overall' } }),
         ]);
 
         setStats({
@@ -28,6 +30,7 @@ const Dashboard = () => {
           totalMatches: gamesRes.data.data.total,
           victoryDist: analyticsRes.data.data,
         });
+        setTopPlayers(lbRes.data.data);
       } catch (error) {
         console.error("Error fetching dashboard data", error);
       } finally {
@@ -51,6 +54,11 @@ const Dashboard = () => {
     { name: 'Sat', games: 90 },
     { name: 'Sun', games: 65 },
   ];
+
+  const rankColor = (rank) =>
+    rank === 1 ? 'text-amber-500' :
+    rank === 2 ? 'text-gray-400' :
+    rank === 3 ? 'text-orange-600' : 'text-gray-600';
 
   return (
     <div className="space-y-6">
@@ -174,7 +182,7 @@ const Dashboard = () => {
       {/* Recent Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card title="Recent Matches" footer={<button className="text-primary font-medium text-sm hover:underline">View all matches</button>}>
+          <Card title="Recent Matches" footer={<Link to="/data" className="text-primary font-medium text-sm hover:underline">View all matches</Link>}>
             <div className="space-y-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
@@ -199,26 +207,26 @@ const Dashboard = () => {
         </div>
 
         <div>
-          <Card title="Leaderboard Top 3">
+          <Card title="Leaderboard Top 3" footer={<Link to="/leaderboard" className="text-primary font-medium text-sm hover:underline">View full leaderboard</Link>}>
             <div className="space-y-6">
-              {[
-                { name: 'Magnus Carlsen', rating: 2850, change: '+12', rank: 1, color: 'text-amber-500' },
-                { name: 'Hikaru Nakamura', rating: 2810, change: '-4', rank: 2, color: 'text-gray-400' },
-                { name: 'Fabiano Caruana', rating: 2795, change: '+8', rank: 3, color: 'text-amber-700' }
-              ].map((player) => (
-                <div key={player.rank} className="flex items-center justify-between">
+              {topPlayers.length > 0 ? topPlayers.map((entry) => (
+                <div key={entry.rank} className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`text-xl font-black ${player.color}`}>#{player.rank}</div>
+                    <div className={`text-xl font-black ${rankColor(entry.rank)}`}>#{entry.rank}</div>
                     <div>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{player.name}</p>
-                      <p className="text-xs text-gray-500">Rating: {player.rating}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        {entry.player?.username || 'Unknown'}
+                      </p>
+                      <p className="text-xs text-gray-500">Rating: {entry.rating}</p>
                     </div>
                   </div>
-                  <div className={`text-xs font-bold ${player.change.startsWith('+') ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {player.change}
+                  <div className="text-xs font-bold text-gray-500">
+                    {entry.wins}W / {entry.losses}L
                   </div>
                 </div>
-              ))}
+              )) : (
+                <p className="text-sm text-gray-500 text-center py-4">No data available</p>
+              )}
             </div>
           </Card>
         </div>

@@ -17,6 +17,7 @@ const UserManagement = lazy(() => import('./pages/users/UserManagement'));
 const DataListing = lazy(() => import('./pages/data/DataListing'));
 const Analytics = lazy(() => import('./pages/analytics/Analytics'));
 const Profile = lazy(() => import('./pages/profile/Profile'));
+const Leaderboard = lazy(() => import('./pages/leaderboard/Leaderboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
               <Route path="/data" element={<DataListing />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
             </Route>
           </Route>
 
