@@ -19,6 +19,8 @@ const Analytics = lazy(() => import('./pages/analytics/Analytics'));
 const Profile = lazy(() => import('./pages/profile/Profile'));
 const Leaderboard = lazy(() => import('./pages/leaderboard/Leaderboard'));
 const Openings = lazy(() => import('./pages/openings/Openings'));
+const Players = lazy(() => import('./pages/players/Players'));
+const PlayerProfile = lazy(() => import('./pages/players/PlayerProfile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
@@ -48,6 +50,8 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/openings" element={<Openings />} />
+              <Route path="/players" element={<Players />} />
+              <Route path="/players/:username" element={<PlayerProfile />} />
             </Route>
           </Route>
 

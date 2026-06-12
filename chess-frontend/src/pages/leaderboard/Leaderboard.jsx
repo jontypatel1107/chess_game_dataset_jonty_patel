@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useNavigate } from 'react-router-dom';
 import { Trophy, Medal, TrendingUp, Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -19,6 +20,7 @@ const CATEGORIES = [
 const COLORS = ['#fbbf24', '#9ca3af', '#cd7f32', '#4338ca', '#db2777'];
 
 const Leaderboard = () => {
+  const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [ratingDist, setRatingDist] = useState([]);
@@ -76,7 +78,11 @@ const Leaderboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {topByTc.map((item, i) => (
-          <Card key={item.category} className="!p-0">
+          <Card
+            key={item.category}
+            className="!p-0 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate(`/players/${item.topPlayerName}`)}
+          >
             <div className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -149,7 +155,10 @@ const Leaderboard = () => {
                         entry.rank === 2 ? 'text-gray-400' :
                         entry.rank === 3 ? 'text-orange-600' : 'text-gray-600 dark:text-gray-400';
                       return (
-                        <tr key={entry.rank} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <tr
+                        key={entry.rank}
+                        onClick={() => entry.player?.username && navigate(`/players/${entry.player.username}`)}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                           <td className="px-4 py-4">
                             <div className={`flex items-center gap-1.5 font-black text-sm ${rankColor}`}>
                               {entry.rank <= 3 && <Trophy size={14} />}
