@@ -35,7 +35,7 @@ const createGame = async (gameData) => {
 };
 
 const getAllGames = async (query = {}) => {
-  const { page, limit, status, timeControl, playerId, sort, result, endReason, rated } = query;
+  const { page, limit, status, timeControl, playerId, sort, result, endReason, rated, search } = query;
   const { skip, limit: lim, page: pg } = getPagination(page, limit);
 
   const filter = {};
@@ -43,11 +43,23 @@ const getAllGames = async (query = {}) => {
   if (timeControl) filter.timeControl = timeControl;
   if (result) filter.result = result;
   if (endReason) filter.endReason = endReason;
-  if (rated !== undefined) filter.rated = rated === "true";
+  
+  // Fix: Only filter by rated if it's explicitly "true" or "false"
+  if (rated === "true" || rated === "false") {
+    filter.rated = rated === "true";
+  }
   
   if (playerId) {
     const pid = mongoose.isValidObjectId(playerId) ? new mongoose.Types.ObjectId(playerId) : null;
     if (pid) filter.$or = [{ whitePlayer: pid }, { blackPlayer: pid }];
+  }
+
+  // Simple search implementation
+  if (search) {
+    filter.$or = [
+      { "opening.name": { $regex: search, $options: "i" } },
+      { "endReason": { $regex: search, $options: "i" } }
+    ];
   }
 
   const sortOption = sort ? { [sort.replace(/^-/, "")]: sort.startsWith("-") ? -1 : 1 } : { createdAt: -1 };
@@ -133,7 +145,6 @@ const updatePlayerStats = async (game) => {
   const black = await User.findById(game.blackPlayer);
   if (!white || !black) return;
 
-  // Simplified ELO logic (keeping your existing logic style)
   const K = 32;
   const expectedWhite = 1 / (1 + Math.pow(10, (black.rating - white.rating) / 400));
   const actualWhite = game.result === "white_wins" ? 1 : game.result === "draw" ? 0.5 : 0;
