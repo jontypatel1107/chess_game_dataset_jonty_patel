@@ -68,7 +68,12 @@ const seedData = async () => {
   }
 
   await Game.create(gamesToCreate);
-  await Leaderboard.create(users.map((u) => ({ player: u._id, rating: u.rating })));
+
+  const categories = ["overall", "bullet", "blitz", "rapid", "classical"];
+  const lbEntries = users.flatMap((u) =>
+    categories.map((cat) => ({ player: u._id, rating: u.rating, category: cat }))
+  );
+  await Leaderboard.create(lbEntries);
 
   console.log("\n🎉 Seeded 30 matches with real move history!");
   process.exit(0);
