@@ -1,134 +1,77 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 const connectDB = require("./config/db");
 const User = require("./models/User");
 const Game = require("./models/Game");
 const Tournament = require("./models/Tournament");
 const Leaderboard = require("./models/Leaderboard");
 
+const moveSequences = [
+  "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7",
+  "d4 Nf6 c4 e6 Nc3 Bb4 e3 O-O Bd3 d5 Nf3 c5 O-O Nc6 a3 Bxc3 bxc3 dxc4 Bxc4 Qc7",
+  "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6 Be3 e5 Nb3 Be6 f3 Be7 Qd2 O-O O-O-O Nbd7 g4 b5 g5 b4 Ne2 Ne8 f4 a5 f5 a4",
+  "c4 e5 Nc3 Nf6 Nf3 Nc6 g3 d5 cxd5 Nxd5 Bg2 Nb6 O-O Be7 a3 O-O b4 Be6 d3 f6 Ne4 a5 Nc5 Bxc5 bxc5 Nd5",
+  "e4 e6 d4 d5 Nc3 Bb4 e5 c5 a3 Bxc3+ bxc3 Ne7 Qg4 O-O Bd3 Nbc6 Nf3 f5 exf6 Rxf6 Bg5 Rf7 Qh5 g6 Qd1",
+];
+
+const openings = [
+  { name: "Sicilian Defense: Najdorf Variation", eco: "B90" },
+  { name: "Ruy Lopez: Marshall Attack", eco: "C89" },
+  { name: "Queen's Gambit Declined", eco: "D30" },
+  { name: "King's Indian Defense", eco: "E60" },
+  { name: "Caro-Kann Defense: Advance Variation", eco: "B12" }
+];
+
+const reasons = ["checkmate", "resignation", "timeout", "stalemate", "mutual_agreement"];
+
 const seedData = async () => {
   await connectDB();
-  console.log("🌱 Starting database seed...\n");
+  console.log("🌱 Starting realistic database seed...\n");
 
-  // Clear existing data
-  await Promise.all([
-    User.deleteMany({}),
-    Game.deleteMany({}),
-    Tournament.deleteMany({}),
-    Leaderboard.deleteMany({}),
-  ]);
-  console.log("🗑️  Cleared existing data");
+  await Promise.all([User.deleteMany({}), Game.deleteMany({}), Tournament.deleteMany({}), Leaderboard.deleteMany({})]);
 
-  // Create users
   const users = await User.create([
-    { username: "MagnusMaster", email: "magnus@chess.com", password: "password123", rating: 2850, country: "Norway", wins: 120, losses: 10, draws: 30, gamesPlayed: 160, role: "admin" },
-    { username: "FisherKing",   email: "fisher@chess.com", password: "password123", rating: 2780, country: "USA",    wins: 100, losses: 15, draws: 20, gamesPlayed: 135 },
-    { username: "KarpovKnight", email: "karpov@chess.com", password: "password123", rating: 2720, country: "Russia", wins: 90,  losses: 20, draws: 40, gamesPlayed: 150 },
-    { username: "TalAttacker",  email: "tal@chess.com",    password: "password123", rating: 2650, country: "Latvia", wins: 80,  losses: 25, draws: 15, gamesPlayed: 120 },
-    { username: "NimzoNinja",   email: "nimzo@chess.com",  password: "password123", rating: 1600, country: "India",  wins: 40,  losses: 50, draws: 10, gamesPlayed: 100 },
-    { username: "PawnPusher",   email: "pawn@chess.com",   password: "password123", rating: 1200, country: "India",  wins: 20,  losses: 70, draws: 10, gamesPlayed: 100 },
+    { username: "MagnusMaster", email: "magnus@chess.com", password: "password123", rating: 2850, role: "admin" },
+    { username: "FisherKing",   email: "fisher@chess.com", password: "password123", rating: 2780 },
+    { username: "KarpovKnight", email: "karpov@chess.com", password: "password123", rating: 2720 },
+    { username: "TalAttacker",  email: "tal@chess.com",    password: "password123", rating: 2650 },
+    { username: "NimzoNinja",   email: "nimzo@chess.com",  password: "password123", rating: 1600 },
+    { username: "PawnPusher",   email: "pawn@chess.com",   password: "password123", rating: 1200 },
   ]);
-  console.log(`✅ Created ${users.length} users`);
 
-  // Create leaderboard entries
-  await Leaderboard.create(users.map((u) => ({
-    player: u._id,
-    rating: u.rating,
-    gamesPlayed: u.gamesPlayed,
-    wins: u.wins,
-    losses: u.losses,
-    draws: u.draws,
-    category: "overall",
-  })));
-  console.log("✅ Created leaderboard entries");
+  const gamesToCreate = [];
+  for (let i = 1; i <= 30; i++) {
+    const whiteIdx = Math.floor(Math.random() * users.length);
+    let blackIdx = Math.floor(Math.random() * users.length);
+    while (blackIdx === whiteIdx) blackIdx = Math.floor(Math.random() * users.length);
 
-  // Create games
-  const games = await Game.create([
-    {
-      sourceId: "seed-game-1",
-      whitePlayer: users[0]._id,
-      blackPlayer: users[1]._id,
+    const sequence = moveSequences[Math.floor(Math.random() * moveSequences.length)];
+    const opening = openings[Math.floor(Math.random() * openings.length)];
+    const result = Math.random() > 0.4 ? (Math.random() > 0.5 ? "white_wins" : "black_wins") : "draw";
+    
+    gamesToCreate.push({
+      sourceId: `seed-game-${i}`,
+      whitePlayer: users[whiteIdx]._id,
+      blackPlayer: users[blackIdx]._id,
       status: "completed",
-      result: "white_wins",
-      winner: users[0]._id,
-      endReason: "checkmate",
-      timeControl: "rapid",
-      totalMoves: 42,
-      startedAt: new Date("2024-01-10"),
-      endedAt: new Date("2024-01-10"),
-      moves: [
-        { moveNumber: 1, player: users[0]._id, from: "e2", to: "e4", piece: "pawn", notation: "e4" },
-        { moveNumber: 2, player: users[1]._id, from: "e7", to: "e5", piece: "pawn", notation: "e5" },
-        { moveNumber: 3, player: users[0]._id, from: "g1", to: "f3", piece: "knight", notation: "Nf3" },
-      ],
-    },
-    {
-      sourceId: "seed-game-2",
-      whitePlayer: users[2]._id,
-      blackPlayer: users[3]._id,
-      status: "completed",
-      result: "draw",
-      endReason: "stalemate",
-      timeControl: "blitz",
-      totalMoves: 60,
-      startedAt: new Date("2024-01-12"),
-      endedAt: new Date("2024-01-12"),
-    },
-    {
-      sourceId: "seed-game-3",
-      whitePlayer: users[1]._id,
-      blackPlayer: users[4]._id,
-      status: "ongoing",
-      timeControl: "classical",
-      totalMoves: 15,
-      startedAt: new Date(),
-    },
-    {
-      sourceId: "seed-game-4",
-      whitePlayer: users[4]._id,
-      blackPlayer: users[5]._id,
-      status: "completed",
-      result: "black_wins",
-      winner: users[5]._id,
-      endReason: "resignation",
-      timeControl: "bullet",
-      totalMoves: 22,
-      startedAt: new Date("2024-01-15"),
-      endedAt: new Date("2024-01-15"),
-    },
-  ]);
-  console.log(`✅ Created ${games.length} games`);
+      result: result,
+      winner: result === "white_wins" ? users[whiteIdx]._id : (result === "black_wins" ? users[blackIdx]._id : null),
+      endReason: reasons[Math.floor(Math.random() * reasons.length)],
+      timeControl: ["blitz", "rapid", "classical"][Math.floor(Math.random() * 3)],
+      rated: true,
+      moveText: sequence,
+      totalMoves: sequence.split(" ").length,
+      opening: opening,
+      playerRatings: { white: users[whiteIdx].rating, black: users[blackIdx].rating },
+      createdAt: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30),
+    });
+  }
 
-  // Create tournament
-  await Tournament.create({
-    name: "Grand Chess Championship 2024",
-    description: "Annual rapid chess tournament open to all ratings",
-    organizer: users[0]._id,
-    format: "swiss",
-    timeControl: "rapid",
-    status: "upcoming",
-    maxPlayers: 32,
-    startDate: new Date("2024-03-01"),
-    prizePool: 5000,
-    registeredPlayers: [
-      { player: users[0]._id },
-      { player: users[1]._id },
-      { player: users[2]._id },
-      { player: users[3]._id },
-    ],
-    games: [games[0]._id],
-  });
-  console.log("✅ Created tournament");
+  await Game.create(gamesToCreate);
+  await Leaderboard.create(users.map((u) => ({ player: u._id, rating: u.rating })));
 
-  console.log("\n🎉 Database seeded successfully!");
-  console.log("\n📋 Test Credentials:");
-  console.log("   Admin  → magnus@chess.com  / password123");
-  console.log("   Player → fisher@chess.com  / password123");
+  console.log("\n🎉 Seeded 30 matches with real move history!");
   process.exit(0);
 };
 
-seedData().catch((err) => {
-  console.error("❌ Seed failed:", err);
-  process.exit(1);
-});
+seedData().catch(err => { console.error(err); process.exit(1); });
