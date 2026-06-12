@@ -155,10 +155,11 @@ const Leaderboard = () => {
                         entry.rank === 2 ? 'text-gray-400' :
                         entry.rank === 3 ? 'text-orange-600' : 'text-gray-600 dark:text-gray-400';
                       return (
-                        <tr
-                        key={entry.rank}
-                        onClick={() => entry.player?.username && navigate(`/players/${entry.player.username}`)}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                        <tr 
+                          key={entry.rank}
+                          onClick={() => entry.player?.username && navigate(`/players/${entry.player.username}`)}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                        >
                           <td className="px-4 py-4">
                             <div className={`flex items-center gap-1.5 font-black text-sm ${rankColor}`}>
                               {entry.rank <= 3 && <Trophy size={14} />}
