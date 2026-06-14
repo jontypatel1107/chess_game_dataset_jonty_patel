@@ -23,6 +23,7 @@ const Players = lazy(() => import('./pages/players/Players'));
 const PlayerProfile = lazy(() => import('./pages/players/PlayerProfile'));
 const Tournaments = lazy(() => import('./pages/tournaments/Tournaments'));
 const TournamentDetail = lazy(() => import('./pages/tournaments/TournamentDetail'));
+const SearchPage = lazy(() => import('./pages/search/Search'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
@@ -55,6 +56,7 @@ function App() {
               <Route path="/players" element={<Players />} />
               <Route path="/tournaments" element={<Tournaments />} />
               <Route path="/tournaments/:id" element={<TournamentDetail />} />
+              <Route path="/search" element={<SearchPage />} />
               <Route path="/players/:username" element={<PlayerProfile />} />
             </Route>
           </Route>

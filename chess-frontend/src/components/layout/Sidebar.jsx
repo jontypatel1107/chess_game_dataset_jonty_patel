@@ -11,7 +11,8 @@ import {
   Trophy,
   BookOpen,
   ChevronLeft,
-  Swords
+  Swords,
+  Search
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -20,6 +21,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { name: 'Search', icon: Search, path: '/search' },
     { name: 'Tournaments', icon: Swords, path: '/tournaments' },
     { name: 'Leaderboard', icon: Trophy, path: '/leaderboard' },
     { name: 'Openings', icon: BookOpen, path: '/openings' },
