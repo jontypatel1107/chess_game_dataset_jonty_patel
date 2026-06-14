@@ -10,7 +10,8 @@ import {
   Settings,
   Trophy,
   BookOpen,
-  ChevronLeft
+  ChevronLeft,
+  Swords
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -19,6 +20,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { name: 'Tournaments', icon: Swords, path: '/tournaments' },
     { name: 'Leaderboard', icon: Trophy, path: '/leaderboard' },
     { name: 'Openings', icon: BookOpen, path: '/openings' },
     { name: 'User Management', icon: Users, path: '/users', adminOnly: true },
