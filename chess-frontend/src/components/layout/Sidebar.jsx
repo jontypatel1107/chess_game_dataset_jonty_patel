@@ -12,7 +12,8 @@ import {
   BookOpen,
   ChevronLeft,
   Swords,
-  Search
+  Search,
+  Shield
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -26,6 +27,7 @@ const Sidebar = () => {
     { name: 'Leaderboard', icon: Trophy, path: '/leaderboard' },
     { name: 'Openings', icon: BookOpen, path: '/openings' },
     { name: 'User Management', icon: Users, path: '/users', adminOnly: true },
+    { name: 'Admin Panel', icon: Shield, path: '/admin', adminOnly: true },
     { name: 'Data Listing', icon: Database, path: '/data' },
     { name: 'Analytics', icon: BarChart3, path: '/analytics' },
     { name: 'Profile', icon: UserCircle, path: '/profile' },
