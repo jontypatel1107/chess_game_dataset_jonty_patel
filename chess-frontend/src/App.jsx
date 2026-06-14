@@ -21,6 +21,8 @@ const Leaderboard = lazy(() => import('./pages/leaderboard/Leaderboard'));
 const Openings = lazy(() => import('./pages/openings/Openings'));
 const Players = lazy(() => import('./pages/players/Players'));
 const PlayerProfile = lazy(() => import('./pages/players/PlayerProfile'));
+const Tournaments = lazy(() => import('./pages/tournaments/Tournaments'));
+const TournamentDetail = lazy(() => import('./pages/tournaments/TournamentDetail'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
@@ -51,6 +53,8 @@ function App() {
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/openings" element={<Openings />} />
               <Route path="/players" element={<Players />} />
+              <Route path="/tournaments" element={<Tournaments />} />
+              <Route path="/tournaments/:id" element={<TournamentDetail />} />
               <Route path="/players/:username" element={<PlayerProfile />} />
             </Route>
           </Route>
