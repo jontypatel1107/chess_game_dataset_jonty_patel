@@ -21,9 +21,15 @@ const registerUser = async ({ username, email, password, country, avatar }) => {
 
   // Create leaderboard entries for all categories
   const categories = ["overall", "bullet", "blitz", "rapid", "classical"];
-  await Leaderboard.create(
-    categories.map((cat) => ({ player: user._id, rating: user.rating, category: cat }))
-  );
+  try {
+    await Leaderboard.insertMany(
+      categories.map((cat) => ({ player: user._id, rating: user.rating, category: cat })),
+      { ordered: false }
+    );
+  } catch (leaderboardError) {
+    // Log error but don't fail registration if leaderboard creation fails
+    console.error("Leaderboard creation error:", leaderboardError.message);
+  }
 
   const token = generateToken(user._id);
   return { user: sanitizeUser(user), token };
