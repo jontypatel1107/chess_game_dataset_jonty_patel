@@ -1,242 +1,173 @@
-# Chess Game Dataset API
+# Chess Game Dataset
 
-A Node.js, Express, and MongoDB backend for managing chess users, games, tournaments, leaderboards, openings, analytics, and searchable chess dataset records.
-
-The project is organized as a REST API with MVC-style folders, JWT authentication, reusable middleware, pagination helpers, aggregation endpoints, and a database seeding script for sample chess data.
-
-## Features
-
-- User registration, login, JWT-protected routes, and profile management
-- Chess game creation, move tracking, game completion, and ELO updates
-- Tournament creation, player registration, and tournament statistics
-- Leaderboard APIs with category filters and rating distribution
-- Player, opening, search, analytics, admin, system, and stats endpoints
-- MongoDB Atlas integration through Mongoose models
-- Request logging, rate limiting, input validation, and centralized error handling
-- Standard JSON response format for success and error responses
-- Seed script with sample users, games, tournaments, and leaderboard data
-- Dataset import script for loading the chess JSON dataset into MongoDB Atlas
+A full-stack chess analytics platform with a **Node.js/Express/MongoDB** REST API backend and a **React/Vite/Redux** frontend dashboard.
 
 ## Tech Stack
 
-- Node.js
-- Express.js
-- MongoDB Atlas
-- Mongoose
-- JSON Web Tokens
-- bcryptjs
-- express-rate-limit
-- morgan
-- nodemon
+### Backend
+- Node.js, Express.js, MongoDB Atlas, Mongoose
+- JWT authentication, bcrypt, express-rate-limit
+- 4 Mongoose models (User, Game, Tournament, Leaderboard)
+- 129 REST API endpoints across 12 route modules
+
+### Frontend
+- React 18, Vite 5, Redux Toolkit, React Router v6
+- Material UI 5, Tailwind CSS 3, Recharts, Framer Motion
+- Axios with JWT interceptor, Formik + Yup validation
+- Lazy-loaded pages with Suspense, ErrorBoundary
 
 ## Project Structure
 
-```text
+```
 chess_game_dataset_jonty_patel/
-+-- README.md
-`-- chess-backend/
-    +-- config/
-    |   `-- db.js
-    +-- controllers/
-    +-- data/
-    |   `-- openings.js
-    +-- middlewares/
-    +-- models/
-    |   +-- Game.js
-    |   +-- Leaderboard.js
-    |   +-- Tournament.js
-    |   `-- User.js
-    +-- routes/
-    +-- services/
-    +-- utils/
-    +-- .env.example
-    +-- importDataset.js
-    +-- package.json
-    +-- seed.js
-    `-- server.js
+├── README.md
+├── chess-backend/           # REST API server
+│   ├── config/              # MongoDB connection
+│   ├── controllers/         # Request handlers
+│   ├── middlewares/          # Auth, validation, error handling
+│   ├── models/              # Mongoose schemas
+│   ├── routes/              # Route definitions (15 files)
+│   ├── services/            # Business logic
+│   ├── utils/               # Pagination, response helpers
+│   ├── server.js            # Entry point
+│   ├── Procfile             # Render deployment config
+│   └── Chess-API-Postman-Collection.json
+└── chess-frontend/          # React dashboard
+    ├── src/
+    │   ├── components/      # Reusable UI components
+    │   ├── pages/           # Page components (lazy loaded)
+    │   ├── services/        # Axios API services
+    │   ├── store/           # Redux slices
+    │   └── styles/          # Tailwind CSS
+    ├── index.html
+    └── vite.config.js
 ```
 
 ## Getting Started
 
-### 1. Install Dependencies
+### 1. Backend Setup
 
 ```bash
 cd chess-backend
 npm install
-```
-
-### 2. Configure Environment Variables
-
-Create a local `.env` file from the example file:
-
-```bash
 cp .env.example .env
 ```
 
-Update the values in `.env`:
+Edit `.env` with your MongoDB Atlas URI and JWT secret:
 
 ```env
 PORT=5000
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database>?retryWrites=true&w=majority
-JWT_SECRET=replace_with_a_strong_secret_key
+MONGO_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/chess_db
+JWT_SECRET=your_strong_secret_key
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
 ```
 
-Keep real MongoDB credentials and JWT secrets out of Git.
-
-### 3. Run the API
-
-Development mode with auto-reload:
-
 ```bash
+# Start backend
 npm run dev
-```
 
-Production mode:
-
-```bash
-npm start
-```
-
-The server runs on:
-
-```text
-http://localhost:5000
-```
-
-Health check:
-
-```text
-GET http://localhost:5000/health
-GET http://localhost:5000/api/v1/health
-```
-
-### 4. Seed the Database
-
-```bash
+# Seed sample data
 npm run seed
 ```
 
-Sample login credentials after seeding:
+### 2. Frontend Setup
+
+```bash
+cd chess-frontend
+npm install
+
+# Start dev server (proxies /api to localhost:5000)
+npm run dev
+```
+
+The frontend runs on `http://localhost:3000` and the backend on `http://localhost:5000`.
+
+### 3. Import Chess Dataset
+
+Place `Chess Game Dataset.json` in `chess-backend/`, then:
+
+```bash
+cd chess-backend
+npm run import:data
+```
+
+## Test Credentials (after seeding)
 
 | Role | Email | Password |
-| --- | --- | --- |
+|------|-------|----------|
 | Admin | magnus@chess.com | password123 |
 | Player | fisher@chess.com | password123 |
 | Player | karpov@chess.com | password123 |
 
-### 5. Import the Chess Dataset
+## API Overview
 
-Place the dataset file in the backend folder with this exact name:
+Base URL: `http://localhost:5000/api/v1`
 
-```text
-chess-backend/Chess Game Dataset.json
-```
+| Category | Endpoints | Auth |
+|----------|-----------|------|
+| Auth | Register, login, profile, logout | Mixed |
+| Users | List, search, stats, update | Mixed |
+| Games | CRUD, moves, end game, bulk ops | Mixed |
+| Tournaments | CRUD, registration, stats | Mixed |
+| Leaderboard | Rankings, top by TC, distribution | Public |
+| Players | Search, compare, history, rates | Public |
+| Openings | Popular, trending, by ECO/style | Public |
+| Search | 15 search types (fuzzy, advanced, etc.) | Public |
+| Analytics | Victory dist, upsets, frequencies | Public |
+| Stats | Totals, rates, daily/monthly/yearly | Public |
+| Admin | Users, logs, ban/unban, dashboard | Admin |
+| System | Info, version, uptime, performance | Mixed |
 
-Then run:
+## API Documentation (Postman)
 
-```bash
-npm run import:data
-```
+Import `chess-backend/Chess-API-Postman-Collection.json` into Postman.
 
-The importer reads the JSON dataset, creates or updates players, and stores games in MongoDB Atlas. It uses the original dataset game `id` as `sourceId`, so running the command again updates existing imported games instead of creating duplicates.
+- Set `base_url` to your deployed or local backend URL
+- Call `POST /auth/login` and set the `token` variable
+- All 129 endpoints are pre-configured with headers, bodies, query params, and auth
 
-The dataset file is ignored by Git because it is a large local data file.
+## Deployment (Render)
 
-## API Base URL
+### Backend (Web Service)
+- **Root Directory:** `chess-backend`
+- **Build Command:** `npm install`
+- **Start Command:** `node server.js`
+- **Env Variables:** `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV=production`
 
-```text
-http://localhost:5000/api/v1
-```
-
-## Main API Routes
-
-| Route | Purpose |
-| --- | --- |
-| `/auth` | Register, login, current user, logout |
-| `/users` | User listing, profile, stats, and admin deletion |
-| `/games` | Game creation, moves, status updates, and game stats |
-| `/tournaments` | Tournament listing, creation, updates, and registration |
-| `/leaderboard` | Rankings, top players, and rating distribution |
-| `/matches` | Match-related dataset endpoints |
-| `/players` | Player dataset and profile endpoints |
-| `/openings` | Chess opening data |
-| `/search` | Search across chess data |
-| `/analytics` | Analytics and aggregation endpoints |
-| `/stats` | Project-level statistics endpoints |
-| `/admin` | Admin-only operations |
-| `/system` | System/status utilities |
-| `/middleware` | Middleware demonstration routes |
-| `/protected` | JWT-protected route examples |
-
-## Authentication
-
-Protected endpoints require a bearer token:
-
-```http
-Authorization: Bearer <jwt_token>
-```
-
-You can get a token by logging in:
-
-```http
-POST /api/v1/auth/login
-```
-
-## Example Queries
-
-```text
-GET /api/v1/users?search=magnus&sortBy=rating&order=desc&page=1&limit=10
-GET /api/v1/games?status=ongoing&timeControl=rapid&playerId=<user_id>
-GET /api/v1/tournaments?status=upcoming&format=swiss&search=grand
-GET /api/v1/leaderboard?category=blitz&country=India&page=1&limit=20
-```
+### Frontend (Static Site)
+- **Root Directory:** `chess-frontend`
+- **Build Command:** `npm install && npm run build`
+- **Publish Directory:** `dist`
+- **Env Variables:** `VITE_API_URL=https://your-backend.onrender.com/api/v1`
 
 ## Response Format
-
-Success response:
 
 ```json
 {
   "success": true,
-  "message": "Games fetched successfully",
+  "message": "Operation successful",
   "data": [],
   "pagination": {
-    "total": 50,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 5,
-    "hasNextPage": true,
-    "hasPrevPage": false
+    "total": 50, "page": 1, "limit": 10,
+    "totalPages": 5, "hasNextPage": true, "hasPrevPage": false
   }
 }
 ```
 
-Error response:
+## Scripts
 
-```json
-{
-  "success": false,
-  "message": "Token has expired. Please log in again."
-}
-```
-
-## Useful Scripts
-
-Run these commands inside `chess-backend/`.
-
+### Backend
 | Command | Description |
-| --- | --- |
-| `npm install` | Install project dependencies |
-| `npm run dev` | Start development server with nodemon |
-| `npm start` | Start server with Node.js |
-| `npm run seed` | Seed MongoDB with sample chess data |
-| `npm run import:data` | Import `Chess Game Dataset.json` into MongoDB Atlas |
+|---------|-------------|
+| `npm run dev` | Dev server with nodemon |
+| `npm start` | Production start |
+| `npm run seed` | Seed sample data |
+| `npm run import:data` | Import chess dataset |
 
-## Notes
-
-- The backend README inside `chess-backend/` contains more detailed endpoint notes.
-- `node_modules/` should not be committed.
-- `Chess Game Dataset.json` is intentionally ignored by Git.
-- Make sure your MongoDB Atlas cluster allows connections from your IP address before starting the server.
+### Frontend
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Vite dev server (port 3000) |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |

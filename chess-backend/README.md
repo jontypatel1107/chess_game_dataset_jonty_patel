@@ -159,6 +159,101 @@ npm run seed
 | GET    | `/top-by-time-control`     | ❌   | Top player per time control      |
 | GET    | `/rating-distribution`     | ❌   | ELO rating distribution buckets  |
 
+### 🎮 Players  `/api/v1/players`
+| Method | Endpoint                        | Auth | Description                      |
+|--------|---------------------------------|------|----------------------------------|
+| GET    | `/`                             | ❌   | All active players (paginated)   |
+| GET    | `/top-rated`                    | ❌   | Top N by rating                  |
+| GET    | `/top-active`                   | ❌   | Top N by games played            |
+| GET    | `/top-winning`                  | ❌   | Top N by wins                    |
+| GET    | `/rating-range`                 | ❌   | Players within rating range      |
+| GET    | `/compare/:player1/:player2`    | ❌   | Compare two players by username  |
+| GET    | `/:username`                    | ❌   | Single player by username        |
+| GET    | `/:username/history`            | ❌   | Match history (paginated)        |
+| GET    | `/:username/stats`              | ❌   | Win/loss/draw statistics         |
+| GET    | `/:username/openings`           | ❌   | Opening usage                    |
+| GET    | `/:username/rating-history`     | ❌   | Rating history                   |
+| GET    | `/:username/win-rate`           | ❌   | Win rate percentage              |
+| GET    | `/:username/loss-rate`          | ❌   | Loss rate percentage             |
+| GET    | `/:username/draw-rate`          | ❌   | Draw rate percentage             |
+| GET    | `/:username/recent`             | ❌   | Recent N matches                 |
+
+### 🏁 Openings  `/api/v1/openings`
+| Method | Endpoint                   | Auth | Description                      |
+|--------|----------------------------|------|----------------------------------|
+| GET    | `/`                        | ❌   | Paginated openings list          |
+| GET    | `/popular`                 | ❌   | Top 50 popular openings          |
+| GET    | `/trending`                | ❌   | Top 5 trending                   |
+| GET    | `/search`                  | ❌   | Search by name or ECO code       |
+| GET    | `/win-rates`               | ❌   | Top 50 with win rates            |
+| GET    | `/aggressive`              | ❌   | Aggressive-style openings        |
+| GET    | `/defensive`               | ❌   | Defensive-style openings         |
+| GET    | `/gambits`                 | ❌   | Gambit openings                  |
+| GET    | `/eco/:ecoCode`            | ❌   | Openings by ECO code             |
+
+### 🔍 Search  `/api/v1/search`
+| Method | Endpoint                   | Auth | Description                      |
+|--------|----------------------------|------|----------------------------------|
+| GET    | `/matches`                 | ❌   | Search matches by PGN/moves      |
+| GET    | `/players`                 | ❌   | Search players by username       |
+| GET    | `/openings`                | ❌   | Search openings by name/ECO      |
+| GET    | `/eco`                     | ❌   | Search by ECO code               |
+| GET    | `/moves`                   | ❌   | Search by move sequence          |
+| GET    | `/fuzzy`                   | ❌   | Fuzzy search on opening names    |
+| GET    | `/autocomplete`            | ❌   | Autocomplete for openings/players|
+| GET    | `/advanced`                | ❌   | Multi-filter search              |
+| GET    | `/date-range`              | ❌   | Games within date range          |
+
+### 📈 Analytics  `/api/v1/analytics`
+| Method | Endpoint                   | Auth | Description                      |
+|--------|----------------------------|------|----------------------------------|
+| GET    | `/top-games`               | ❌   | Top games by move count          |
+| GET    | `/victory-distribution`    | ❌   | Result distribution              |
+| GET    | `/color-advantage`         | ❌   | White/black win rates            |
+| GET    | `/turn-count-average`      | ❌   | Average moves per game           |
+| GET    | `/rated-vs-casual`         | ❌   | Rated vs casual count            |
+| GET    | `/time-control-usage`      | ❌   | Time control distribution        |
+| GET    | `/shortest-games`          | ❌   | 10 shortest games                |
+| GET    | `/longest-games`           | ❌   | 10 longest games                 |
+| GET    | `/rating-gap-upsets`       | ❌   | Biggest rating gap upsets        |
+| GET    | `/hourly-activity`         | ❌   | Games per hour of day            |
+
+### 📊 Stats  `/api/v1/stats`
+| Method | Endpoint                   | Auth | Description                      |
+|--------|----------------------------|------|----------------------------------|
+| GET    | `/total-matches`           | ❌   | Total game count                 |
+| GET    | `/total-players`           | ❌   | Total active players             |
+| GET    | `/average-rating`          | ❌   | Average player rating            |
+| GET    | `/top-openings`            | ❌   | Top 10 most played openings      |
+| GET    | `/checkmate-rate`          | ❌   | Checkmate rate                   |
+| GET    | `/resignation-rate`        | ❌   | Resignation rate                 |
+| GET    | `/white-win-rate`          | ❌   | White win rate                   |
+| GET    | `/black-win-rate`          | ❌   | Black win rate                   |
+| GET    | `/draw-rate`               | ❌   | Draw rate                        |
+| GET    | `/daily-games`             | ❌   | Games per day                    |
+| GET    | `/monthly-games`           | ❌   | Games per month                  |
+
+### 🔐 Admin  `/api/v1/admin`
+| Method | Endpoint                   | Auth  | Description                      |
+|--------|----------------------------|-------|----------------------------------|
+| GET    | `/users`                   | ✅👑  | List all users                   |
+| GET    | `/logs`                    | ✅👑  | System logs                      |
+| GET    | `/system/health`           | ✅👑  | Admin health check               |
+| DELETE | `/cache/clear`             | ✅👑  | Clear cache                      |
+| PATCH  | `/users/:id/ban`           | ✅👑  | Ban a user                       |
+| PATCH  | `/users/:id/unban`         | ✅👑  | Unban a user                     |
+
+### ⚙️ System  `/api/v1/system`
+| Method | Endpoint                   | Auth  | Description                      |
+|--------|----------------------------|-------|----------------------------------|
+| GET    | `/info`                    | ❌    | System info                      |
+| GET    | `/version`                 | ❌    | API version                      |
+| GET    | `/status`                  | ❌    | System status                    |
+| GET    | `/uptime`                  | ✅👑  | Server uptime                    |
+| GET    | `/database/status`         | ✅👑  | MongoDB connection status        |
+| GET    | `/performance`             | ✅👑  | Memory usage metrics             |
+| GET    | `/storage`                 | ✅👑  | Match and player counts          |
+
 ---
 
 ## 🔍 Query Parameters
@@ -257,11 +352,30 @@ JWT expires in **7 days** (configurable via `JWT_EXPIRES_IN`).
 
 ## 📬 Postman Collection
 
-Import the collection by creating a new request environment with:
-- `base_url`: `http://localhost:5000/api/v1`
-- `token`: (paste JWT after login)
+Import `Chess-API-Postman-Collection.json` into Postman for a complete API workspace.
 
-Then use `{{base_url}}/auth/login` with Bearer `{{token}}` for protected routes.
+All 129 endpoints are pre-configured with:
+- Full URLs, query parameters, and route variables
+- Request body examples for POST/PUT/PATCH endpoints
+- Auth headers using `{{token}}` variable
+- Descriptions for each endpoint
+
+**Setup:**
+1. Set `base_url` variable (default: `http://localhost:5000`)
+2. Call `POST /api/v1/auth/login` → copy the JWT token
+3. Set `token` variable → all protected routes auto-inject `Authorization: Bearer {{token}}`
+
+---
+
+## 🚀 Deployment (Render)
+
+### Web Service
+- **Root Directory:** `chess-backend`
+- **Build Command:** `npm install`
+- **Start Command:** `node server.js`
+- **Required Env Vars:** `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV=production`
+
+A `Procfile` is included for Render compatibility.
 
 ---
 
