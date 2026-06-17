@@ -1,1 +1,1 @@
-web: cd ../chess-frontend && npm install && npm run build && cd ../chess-backend && node server.js
+web: sh ../build.sh && node server.js
