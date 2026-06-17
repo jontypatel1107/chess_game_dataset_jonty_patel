@@ -4,7 +4,8 @@
   "description": "Full-featured Chess Game REST API built with Node.js, Express.js, and MongoDB Atlas",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "npm run build:frontend && node server.js",
+    "build:frontend": "cd ../chess-frontend && npm install && npm run build",
     "dev": "nodemon server.js",
     "seed": "node seed.js",
     "import:data": "node importDataset.js"
