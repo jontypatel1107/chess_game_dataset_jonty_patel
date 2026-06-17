@@ -22,9 +22,15 @@ const registerUser = async ({ username, email, password, country, avatar }) => {
   // Create leaderboard entries for all categories
   const categories = ["overall", "bullet", "blitz", "rapid", "classical"];
   try {
-    await Leaderboard.insertMany(
-      categories.map((cat) => ({ player: user._id, rating: user.rating, category: cat })),
-      { ordered: false }
+    // Use updateOne with upsert to avoid duplicate key errors
+    await Promise.all(
+      categories.map((cat) =>
+        Leaderboard.updateOne(
+          { player: user._id, category: cat },
+          { $setOnInsert: { player: user._id, rating: user.rating, category: cat } },
+          { upsert: true }
+        )
+      )
     );
   } catch (leaderboardError) {
     // Log error but don't fail registration if leaderboard creation fails
