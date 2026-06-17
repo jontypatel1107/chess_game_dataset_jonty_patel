@@ -26,6 +26,7 @@ connectDB();
 
 const app = express();
 const path = require('path');
+const fs = require('fs');
 
 // ─── Core Middleware ──────────────────────────────────────────
 app.use(cors());
@@ -33,9 +34,11 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
-// ─── Serve Frontend Static Files ──────────────────────────────
+// ─── Serve Frontend Static Files (if exists) ──────────────────
 const frontendBuildPath = path.join(__dirname, '../chess-frontend/dist');
-app.use(express.static(frontendBuildPath));
+if (fs.existsSync(frontendBuildPath)) {
+  app.use(express.static(frontendBuildPath));
+}
 
 // ─── Rate Limiting ────────────────────────────────────────────
 const limiter = rateLimit({
@@ -70,13 +73,17 @@ app.use("/api/v1/system", systemRoutes);
 
 // ─── Fallback to Frontend for Client-Side Routing ──────────────
 app.get('*', (req, res) => {
-  // If it's not an API route, serve the frontend index.html for client-side routing
+  // If it's not an API route, try to serve the frontend index.html for client-side routing
   if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(frontendBuildPath, 'index.html'), (err) => {
-      if (err) {
-        res.status(404).json({ success: false, message: 'Frontend build not found. Please build the frontend first.' });
-      }
-    });
+    const indexPath = path.join(frontendBuildPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).json({ 
+        success: false, 
+        message: 'Frontend not available. Build and deploy the frontend separately or build it before starting the server.'
+      });
+    }
   } else {
     res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
   }
