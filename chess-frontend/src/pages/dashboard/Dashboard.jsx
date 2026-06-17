@@ -25,6 +25,8 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        const safeGet = (promise) => promise.catch(() => ({ data: { data: null } }));
+
         const [
           usersRes, gamesRes, victoryRes, lbRes,
           avgRatingRes, whiteWinRes, blackWinRes, drawRateRes,
@@ -33,49 +35,49 @@ const Dashboard = () => {
           hourlyRes, growthRes, turnAvgRes, dailyRes,
           topOpeningsRes, recentGamesRes,
         ] = await Promise.all([
-          api.get('/stats/total-players'),
-          api.get('/stats/total-matches'),
-          api.get('/analytics/victory-distribution'),
-          api.get('/leaderboard', { params: { page: 1, limit: 3, category: 'overall' } }),
-          api.get('/stats/average-rating'),
-          api.get('/stats/white-win-rate'),
-          api.get('/stats/black-win-rate'),
-          api.get('/stats/draw-rate'),
-          api.get('/stats/checkmate-rate'),
-          api.get('/stats/resignation-rate'),
-          api.get('/stats/timeout-rate'),
-          api.get('/analytics/color-advantage'),
-          api.get('/analytics/rated-vs-casual'),
-          api.get('/analytics/time-control-usage'),
-          api.get('/analytics/hourly-activity'),
-          api.get('/analytics/player-growth'),
-          api.get('/analytics/turn-count-average'),
-          api.get('/stats/daily-games'),
-          api.get('/stats/top-openings'),
-          api.get('/games', { params: { page: 1, limit: 5 } }),
+          safeGet(api.get('/stats/total-players')),
+          safeGet(api.get('/stats/total-matches')),
+          safeGet(api.get('/analytics/victory-distribution')),
+          safeGet(api.get('/leaderboard', { params: { page: 1, limit: 3, category: 'overall' } })),
+          safeGet(api.get('/stats/average-rating')),
+          safeGet(api.get('/stats/white-win-rate')),
+          safeGet(api.get('/stats/black-win-rate')),
+          safeGet(api.get('/stats/draw-rate')),
+          safeGet(api.get('/stats/checkmate-rate')),
+          safeGet(api.get('/stats/resignation-rate')),
+          safeGet(api.get('/stats/timeout-rate')),
+          safeGet(api.get('/analytics/color-advantage')),
+          safeGet(api.get('/analytics/rated-vs-casual')),
+          safeGet(api.get('/analytics/time-control-usage')),
+          safeGet(api.get('/analytics/hourly-activity')),
+          safeGet(api.get('/analytics/player-growth')),
+          safeGet(api.get('/analytics/turn-count-average')),
+          safeGet(api.get('/stats/daily-games')),
+          safeGet(api.get('/stats/top-openings')),
+          safeGet(api.get('/games', { params: { page: 1, limit: 5 } })),
         ]);
 
         setData({
-          totalPlayers: usersRes.data.data?.total || usersRes.data.data,
-          totalMatches: gamesRes.data.data?.total || gamesRes.data.data,
-          victoryDist: victoryRes.data.data || [],
-          topPlayers: lbRes.data.data || [],
-          avgRating: avgRatingRes.data.data,
-          whiteWinRate: whiteWinRes.data.data,
-          blackWinRate: blackWinRes.data.data,
-          drawRate: drawRateRes.data.data,
-          checkmateRate: checkmateRes.data.data,
-          resignRate: resignRes.data.data,
-          timeoutRate: timeoutRes.data.data,
-          colorAdvantage: colorAdvRes.data.data || [],
-          ratedVsCasual: ratedVsCasualRes.data.data || [],
-          tcUsage: tcUsageRes.data.data || [],
-          hourlyActivity: hourlyRes.data.data || [],
-          playerGrowth: growthRes.data.data || [],
-          turnAvg: turnAvgRes.data.data,
-          dailyGames: dailyRes.data.data || [],
-          topOpenings: topOpeningsRes.data.data || [],
-          recentGames: recentGamesRes.data.data || [],
+          totalPlayers: usersRes?.data?.data?.total ?? usersRes?.data?.data ?? 0,
+          totalMatches: gamesRes?.data?.data?.total ?? gamesRes?.data?.data ?? 0,
+          victoryDist: victoryRes?.data?.data || [],
+          topPlayers: lbRes?.data?.data || [],
+          avgRating: avgRatingRes?.data?.data,
+          whiteWinRate: whiteWinRes?.data?.data,
+          blackWinRate: blackWinRes?.data?.data,
+          drawRate: drawRateRes?.data?.data,
+          checkmateRate: checkmateRes?.data?.data,
+          resignRate: resignRes?.data?.data,
+          timeoutRate: timeoutRes?.data?.data,
+          colorAdvantage: colorAdvRes?.data?.data || [],
+          ratedVsCasual: ratedVsCasualRes?.data?.data || [],
+          tcUsage: tcUsageRes?.data?.data || [],
+          hourlyActivity: hourlyRes?.data?.data || [],
+          playerGrowth: growthRes?.data?.data || [],
+          turnAvg: turnAvgRes?.data?.data,
+          dailyGames: dailyRes?.data?.data || [],
+          topOpenings: topOpeningsRes?.data?.data || [],
+          recentGames: recentGamesRes?.data?.data || [],
         });
       } catch (error) {
         console.error("Error fetching dashboard data", error);
@@ -121,6 +123,22 @@ const Dashboard = () => {
     if (!n && n !== 0) return 'N/A';
     return typeof n === 'number' ? n.toLocaleString() : n;
   };
+
+  // Normalize analytics shapes: backend sometimes returns objects instead of arrays
+  const colorAdvData = Array.isArray(data.colorAdvantage)
+    ? data.colorAdvantage
+    : [
+        { label: 'White Wins', value: data.colorAdvantage?.whiteWinRate ?? data.whiteWinRate ?? 0 },
+        { label: 'Black Wins', value: data.colorAdvantage?.blackWinRate ?? data.blackWinRate ?? 0 },
+        { label: 'Draws', value: data.colorAdvantage?.drawRate ?? data.drawRate ?? 0 },
+      ];
+
+  const ratedVsCasualData = Array.isArray(data.ratedVsCasual)
+    ? data.ratedVsCasual
+    : [
+        { label: 'Rated', count: data.ratedVsCasual?.rated ?? data.rated ?? 0 },
+        { label: 'Casual', count: data.ratedVsCasual?.casual ?? data.casual ?? 0 },
+      ];
 
   return (
     <div className="space-y-6">
@@ -267,13 +285,13 @@ const Dashboard = () => {
         <Card title="Color Advantage" subtitle="Performance by playing color">
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.colorAdvantage}>
+              <BarChart data={colorAdvData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey={data.colorAdvantage[0]?.color ? 'color' : 'label'} tick={{fill: '#9ca3af', fontSize: 11}} />
+                <XAxis dataKey={colorAdvData[0]?.color ? 'color' : 'label'} tick={{fill: '#9ca3af', fontSize: 11}} />
                 <YAxis tick={{fill: '#9ca3af', fontSize: 11}} />
                 <Tooltip />
-                <Bar dataKey={data.colorAdvantage[0]?.winRate ? 'winRate' : 'value'} radius={[4, 4, 0, 0]} barSize={40}>
-                  {data.colorAdvantage.map((_, i) => (
+                <Bar dataKey={colorAdvData[0]?.winRate ? 'winRate' : 'value'} radius={[4, 4, 0, 0]} barSize={40}>
+                  {colorAdvData.map((_, i) => (
                     <Cell key={i} fill={i === 0 ? '#4338ca' : '#db2777'} />
                   ))}
                 </Bar>
@@ -285,8 +303,8 @@ const Dashboard = () => {
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={data.ratedVsCasual} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={5} dataKey={data.ratedVsCasual[0]?.count ? 'count' : 'value'} nameKey={data.ratedVsCasual[0]?.label ? 'label' : 'name'}>
-                  {data.ratedVsCasual.map((_, i) => (
+                <Pie data={ratedVsCasualData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={5} dataKey={ratedVsCasualData[0]?.count ? 'count' : 'value'} nameKey={ratedVsCasualData[0]?.label ? 'label' : 'name'}>
+                  {ratedVsCasualData.map((_, i) => (
                     <Cell key={i} fill={[COLORS[0], COLORS[3]][i]} />
                   ))}
                 </Pie>
@@ -294,7 +312,7 @@ const Dashboard = () => {
               </PieChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-4 mt-2">
-              {data.ratedVsCasual.map((item, i) => (
+              {ratedVsCasualData.map((item, i) => (
                 <div key={i} className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: [COLORS[0], COLORS[3]][i]}} />
                   <span className="text-xs text-gray-600 dark:text-gray-400 capitalize">{item.label || item.name}</span>

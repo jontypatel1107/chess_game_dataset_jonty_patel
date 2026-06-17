@@ -91,9 +91,9 @@ const TournamentDetail = () => {
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.name}</h1>
-                  <span className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${statusConfig[t.status].color}`}>
+                  <span className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${(statusConfig[t.status]?.color || 'text-gray-600 bg-gray-100 dark:bg-gray-800')}`}>
                     <StatusIcon size={12} />
-                    {statusConfig[t.status].label}
+                    {statusConfig[t.status]?.label || t.status}
                   </span>
                 </div>
                 {t.description && (

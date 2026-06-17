@@ -231,7 +231,7 @@ const DataListing = () => {
               
               <div className="bg-slate-900 rounded-xl p-4 font-mono text-sm leading-loose h-64 overflow-y-auto custom-scrollbar border-4 border-slate-800 shadow-inner">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-y-2 gap-x-4">
-                  {(selectedGame.moveText || selectedGame.moves?.map(m => m.notation).join(' ')).split(' ').map((move, i) => {
+                  {(selectedGame.moveText || selectedGame.moves?.map(m => m.notation).join(' ') || '').split(' ').map((move, i) => {
                     const isWhiteMove = i % 2 === 0;
                     const moveNum = Math.floor(i / 2) + 1;
                     return (

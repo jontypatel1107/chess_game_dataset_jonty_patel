@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Components
 import Layout from './components/layout/Layout';
 import Loader from './components/common/Loader';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Lazy loaded pages
@@ -32,6 +33,7 @@ function App() {
 
   return (
     <Router>
+      <ErrorBoundary>
       <Suspense fallback={<Loader fullPage />}>
         <Routes>
           {/* Public Routes */}
@@ -74,6 +76,7 @@ function App() {
           <Route path="*" element={<Navigate to="/404" />} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
       <ToastContainer 
         position="top-right"
         autoClose={3000}
