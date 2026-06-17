@@ -1,1 +1,0 @@
-import{a as s}from"./api-Hd4tkP_C.js";const a={getAllUsers:async e=>(await s.get("/users",{params:e})).data,getUserById:async e=>(await s.get(`/users/${e}`)).data,updateProfile:async e=>(await s.put("/users/profile",e)).data,deleteUser:async e=>(await s.delete(`/users/${e}`)).data,getUserStats:async e=>(await s.get(`/users/${e}/stats`)).data};export{a as u};
