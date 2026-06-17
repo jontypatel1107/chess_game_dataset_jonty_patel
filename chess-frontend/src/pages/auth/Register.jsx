@@ -43,8 +43,9 @@ const Register = () => {
         toast.success('Registration successful!');
         navigate('/');
       } catch (error) {
-        dispatch(loginFailure(error.message));
-        toast.error(error.message || 'Registration failed');
+        const errorMsg = error.response?.data?.message || error.message || 'Registration failed';
+        dispatch(loginFailure(errorMsg));
+        toast.error(errorMsg);
       }
     },
   });
