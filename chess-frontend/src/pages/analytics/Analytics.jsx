@@ -13,6 +13,7 @@ import Loader from '../../components/common/Loader';
 const Analytics = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -32,6 +33,7 @@ const Analytics = () => {
         });
       } catch (error) {
         console.error("Analytics fetch error", error);
+        setError(error.message || 'Unable to load analytics data');
       } finally {
         setLoading(false);
       }
@@ -41,12 +43,34 @@ const Analytics = () => {
 
   if (loading) return <Loader fullPage />;
 
+  if (error) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Analytics unavailable</h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">No analytics data found</h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Please try refreshing the page or check your backend connection.</p>
+        </div>
+      </div>
+    );
+  }
+
   const COLORS = ['#4338ca', '#db2777', '#fbbf24', '#10b981', '#6366f1'];
 
   const colorAdvData = [
-    { name: 'White Wins', value: data.color.whiteWinRate },
-    { name: 'Black Wins', value: data.color.blackWinRate },
-    { name: 'Draws', value: data.color.drawRate },
+    { name: 'White Wins', value: data.color?.whiteWinRate ?? 0 },
+    { name: 'Black Wins', value: data.color?.blackWinRate ?? 0 },
+    { name: 'Draws', value: data.color?.drawRate ?? 0 },
   ];
 
   return (
@@ -102,7 +126,7 @@ const Analytics = () => {
              <div className="text-6xl font-black text-primary">{data.turns.averageTurns}</div>
              <div className="text-sm font-bold uppercase text-gray-500">Average Moves Per Game</div>
              <p className="text-center text-xs text-gray-400 max-w-xs">
-               Calculated from over {data.timeControl.reduce((a,b) => a + b.count, 0)} historical matches in the system.
+                Calculated from over {Array.isArray(data.timeControl) ? data.timeControl.reduce((a,b) => a + (b.count || 0), 0) : 0} historical matches in the system.
              </p>
           </div>
         </Card>
